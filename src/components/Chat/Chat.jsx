@@ -8,71 +8,72 @@
     MoreVert,
     SearchOutlined,
   } from "@mui/icons-material";
-  // import axios from "../../axios";
-  // import { useParams } from "react-router-dom";
+  import axios from "axios";
+  import { useParams } from "react-router-dom";
   import { useStateValue } from "../ContextApi/StateProvider";
-  // import Pusher from "pusher-js";
+  import Pusher from "pusher-js";
 
 
 const Chat = () => {
     const [seed, setSeed] = useState("");
-    // const [input, setInput] = useState("");
-    // const { roomId } = useParams();
-    // const [roomName, setRoomName] = useState("");
-    // const [messages, setMessages] = useState([]);
-    // const [updatedAt, setUpdatedAt] = useState(new Date());
+    const [input, setInput] = useState("");
+    const { roomId } = useParams();
+    const [roomName, setRoomName] = useState("");
+    const [messages, setMessages] = useState([]);
+    const [updatedAt, setUpdatedAt] = useState(new Date());
     const [{ user }] = useStateValue();
   
-    // useEffect(() => {
-    //   if (roomId) {
-    //     axios.get(`/room/${roomId}`).then((response) => {
-    //       setRoomName(response.data.name);
-    //       setUpdatedAt(response.data.updatedAt);
-    //     });
-    //     axios.get(`/messages/${roomId}`).then((response) => {
-    //       setMessages(response.data);
-    //     });
-    //   }
-    // }, [roomId]);
+    useEffect(() => {
+      if (roomId) {
+        axios.get(`https://whatsapp-db.onrender.com/room/${roomId}`).then((response) => {
+          setRoomName(response.data.name);
+          setUpdatedAt(response.data.updatedAt);
+        });
+        axios.get(`https://whatsapp-db.onrender.com/messages/${roomId}`).then((response) => {
+          setMessages(response.data);
+        });
+      }
+    }, [roomId]);
   
     useEffect(() => {
       setSeed(Math.floor(Math.random() * 5000));
+    }, [roomId]);
+  
+ 
+    const sendMessage = async (e) => {
+      e.preventDefault();
+  
+      if (!input) {
+        return;
+      }
+  
+      await axios.post('https://whatsapp-db.onrender.com/messages/new', {
+        message: input,
+        name: user.displayName,
+        timestamp: new Date(),
+        uid: user.uid,
+        roomId
+      });
+  
+      setInput("");
+    };
+  
+    useEffect(() => {
+      const pusher = new Pusher("84127ae384cf63a3b2c5", {
+        cluster: "ap2",
+      });
+  
+      const channel = pusher.subscribe("messages");
+      channel.bind("inserted", function (room) {
+        // alert(JSON.stringify(newMessage));
+        setMessages((prevMessages) => [...prevMessages, room]);
+      });
+  
+      return () => {
+        channel.unbind_all();
+        channel.unsubscribe();
+      };
     }, []);
-  
-    // const sendMessage = async (e) => {
-    //   e.preventDefault();
-  
-    //   if (!input) {
-    //     return;
-    //   }
-  
-    //   await axios.post(`/messages/new`, {
-    //     message: input,
-    //     name: user.displayName,
-    //     timestamp: new Date(),
-    //     uid: user.uid,
-    //     roomId,
-    //   });
-  
-    //   setInput("");
-    // };
-  
-    // useEffect(() => {
-    //   const pusher = new Pusher("6fbb654a0e0b670de165", {
-    //     cluster: "ap2",
-    //   });
-  
-      // const channel = pusher.subscribe("messages");
-      // channel.bind("inserted", function (room) {
-      //   // alert(JSON.stringify(newMessage));
-      //   setMessages((prevMessages) => [...prevMessages, room]);
-      // });
-  
-    //   return () => {
-    //     channel.unbind_all();
-    //     channel.unsubscribe();
-    //   };
-    // }, []);
   
     return (
       <div className="chat">
@@ -80,8 +81,9 @@ const Chat = () => {
           <Avatar src={`https://avatars.dicebear.com/api/human/${seed}.svg`} />
   
           <div className="chat__headerInfo">
-            <h3>Welcome to Whatsapp</h3>
-            <p>Last updated at {new Date().toString().slice(0, 25)}</p>
+            <h3>{roomName ? roomName : "Welcome to whatsapp"}</h3>
+            <p>Last updated at {new Date(updatedAt).toString().slice(0, 25)}
+            </p>
           </div>
   
           <div className="chat__headerRight">
@@ -96,9 +98,25 @@ const Chat = () => {
             </IconButton>
           </div>
         </div>
+
   
         <div className="chat__body">
-          <p className='chat__message chat__receiver'  >
+        {messages.map((message, index) => (
+
+        <p className={`chat__message ${
+          message.uid === user.uid && "chat__receiver"
+        }`}
+        key={message?.id ? message?.id : index} >
+              <span className="chat__name">{message.name}</span>
+              {message.message}
+              <span className="chat__timestamp">
+             
+                {new Date(message.timestamp).toString().slice(0, 25)}
+              </span>
+            </p>
+ ))}
+ </div>
+          {/* <p className='chat__message chat__receiver'  >
               <span className="chat__name">Yogaaa</span>
              Hello from jack
               <span className="chat__timestamp">
@@ -107,21 +125,23 @@ const Chat = () => {
               </span>
             </p>
        
-        </div>
+        </div> */}
   
-        
+  {roomName && (
           <div className="chat__footer">
             <InsertEmoticon />
             <form>
               <input
                 placeholder="Type a message"
-                type="text"
+                type="text" 
+                onChange={e=>setInput(e.target.value)}
+                value={input}
               />
-              <button >Send a message</button>
+              <button onClick={sendMessage} >Send a message</button>
             </form>
-          
+          <Mic/>
           </div>
-       
+  )}
       </div>
     );
   };

@@ -30,9 +30,9 @@ console.log(state)
         <img src='https://upload.wikimedia.org/wikipedia/commons/thumb/6/6b/WhatsApp.svg/2044px-WhatsApp.svg.png' 
         alt='logo' width='80px'/>
         <div className="login_text">
-           <h1>Sigin to Whatsapp</h1> 
+           <h1>Sign in to Whatsapp</h1> 
         </div>
-        <Button onClick={signIn}>Sign In with Google</Button>
+        <Button type='submit' onClick={signIn}>Sign In with Google</Button>
       </div>
     </div>
   )

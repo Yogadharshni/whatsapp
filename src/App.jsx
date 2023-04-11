@@ -10,6 +10,7 @@ import Chat from './components/Chat/Chat'
 
 function App() {
   const [{ user }] = useStateValue();
+ 
 
   return (
     <div className="app">
@@ -20,7 +21,7 @@ function App() {
   <Sidebar/>
   <Routes>
     <Route path='/' element={<Chat/>}/>
-    <Route path='/rooms/:roomID' element={<Chat/>}/>
+    <Route path='/rooms/:roomId' element={<Chat/>}/>
   </Routes>
 </Router>
         </div>
